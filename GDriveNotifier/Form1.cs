@@ -30,6 +30,7 @@ namespace GDriveNotifier
       DriveState driveState = new DriveState();
       UserCredential credential;
       public Dictionary<string, FileState> excludedFiles = new Dictionary<string, FileState>();
+      string strLastTip = "";
 
 
       DateTime datLast = Properties.Settings.Default.LastChange;
@@ -273,7 +274,7 @@ namespace GDriveNotifier
          }
          if (strDocsChanged != "")
          {
-            if (Properties.Settings.Default.WindowsNotifications)
+            if (Properties.Settings.Default.WindowsNotifications && strDocsChanged != strLastTip)
             {
                nfyIcon.BalloonTipTitle = "Changed Files";
                if (strDocsChanged.Length > 64)
@@ -282,11 +283,13 @@ namespace GDriveNotifier
                }
                nfyIcon.BalloonTipText = strDocsChanged;
                nfyIcon.ShowBalloonTip(Properties.Settings.Default.WindowsNotificationsSeconds);
+               strLastTip = strDocsChanged;
             }
             nfyIcon.Text = strDocsChanged;
          }
          else
          {
+            strLastTip = "";
             nfyIcon.Text = "No changes";
          }
          saveState();
