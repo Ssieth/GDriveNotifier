@@ -31,6 +31,7 @@ namespace GDriveNotifier
       UserCredential credential;
       public Dictionary<string, FileState> excludedFiles = new Dictionary<string, FileState>();
       string strLastTip = "";
+      int failedChecks = 0;
 
 
       DateTime datLast = Properties.Settings.Default.LastChange;
@@ -323,12 +324,20 @@ namespace GDriveNotifier
          try
          {
             checkChanges();
+            // reset the fail count
+            failedChecks = 0;
          }
          catch (Exception ex)
          {
+            // increment the fail count
+            failedChecks++;
             log("*** Error: " + ex.Message, 2);
             log(ex.StackTrace, 2);
-            throw;
+            // 3 failed checks in a row bombs out.
+            if (failedChecks > 3)
+            {
+               throw;
+            }
          }
       }
 
