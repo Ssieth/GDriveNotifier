@@ -333,6 +333,10 @@ namespace GDriveNotifier
             failedChecks++;
             log("*** Error: " + ex.Message, 2);
             log(ex.StackTrace, 2);
+            if (!tmrCheck.Enabled)
+            {
+               tmrCheck.Start();
+            }
             // 3 failed checks in a row bombs out.
             if (failedChecks > 3)
             {
