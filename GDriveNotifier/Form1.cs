@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace GDriveNotifier
 {
@@ -256,6 +257,10 @@ namespace GDriveNotifier
             var response = listRequest.Execute();
             IList<Google.Apis.Drive.v3.Data.File> files = response.Files;
             Console.WriteLine("Files:");
+
+            List<ToastContentBuilder> lstToasts = new List<ToastContentBuilder>();
+            string strDocChangeKey = "";
+
             if (files != null && files.Count > 0)
             {
                 foreach (var file in files)
@@ -263,9 +268,19 @@ namespace GDriveNotifier
                     string lastEditBy = updateFileState(file);
                     if (file.ModifiedTime > datLast && !excludedFiles.ContainsKey(file.Id) && Properties.Settings.Default.MyName != lastEditBy)
                     {
+                        lstToasts.Add(new ToastContentBuilder()
+                            .AddArgument("action", "viewFile")
+                            .AddArgument("fileId", file.Id)
+                            .AddText("File: " + file.Name)
+                            .AddText("Changed by: " + lastEditBy)
+                            .AddText("At: " + file.ModifiedTime)
+                            .SetToastDuration(ToastDuration.Long)
+                        );
+
+                        strDocChangeKey += file.Name + "|" + lastEditBy + "|";
                         if (file.Name.Length > 35)
                         {
-                            strDocsChanged += file.Name.Substring(0,34) + Environment.NewLine;
+                            strDocsChanged += file.Name.Substring(0, 34) + Environment.NewLine;
                         }
                         else
                         {
@@ -280,18 +295,15 @@ namespace GDriveNotifier
             {
                 log("No files found.", 10);
             }
-            if (strDocsChanged != "")
+            if (strDocChangeKey != "")
             {
-                if (Properties.Settings.Default.WindowsNotifications && strDocsChanged != strLastTip)
+                if (Properties.Settings.Default.WindowsNotifications && strDocChangeKey != strLastTip)
                 {
-                    nfyIcon.BalloonTipTitle = "Changed Files";
-                    if (strDocsChanged.Length > 63)
+                    strLastTip = strDocChangeKey;
+                    foreach (ToastContentBuilder tst in lstToasts)
                     {
-                        strDocsChanged = strDocsChanged.Substring(0, 60) + "...";
+                        tst.Show();
                     }
-                    nfyIcon.BalloonTipText = strDocsChanged;
-                    nfyIcon.ShowBalloonTip(Properties.Settings.Default.WindowsNotificationsSeconds);
-                    strLastTip = strDocsChanged;
                 }
                 nfyIcon.Text = strDocsChanged;
             }
