@@ -17,6 +17,8 @@ using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Microsoft.Toolkit.Uwp.Notifications;
+using Windows.Foundation.Collections;
+using System.Windows.Threading;
 
 namespace GDriveNotifier
 {
@@ -271,6 +273,7 @@ namespace GDriveNotifier
                         lstToasts.Add(new ToastContentBuilder()
                             .AddArgument("action", "viewFile")
                             .AddArgument("fileId", file.Id)
+                            .AddArgument("url",file.WebViewLink)
                             .AddText("File: " + file.Name)
                             .AddText("Changed by: " + lastEditBy)
                             .AddText("At: " + file.ModifiedTime)
@@ -321,6 +324,19 @@ namespace GDriveNotifier
         public Form1()
         {
             InitializeComponent();
+            // Listen to notification activation
+            ToastNotificationManagerCompat.OnActivated += toastArgs =>
+            {
+                // Obtain the arguments from the notification
+                ToastArguments args = ToastArguments.Parse(toastArgs.Argument);
+
+                // Obtain any user input (text boxes, menu selections) from the notification
+                ValueSet userInput = toastArgs.UserInput;
+
+                // Need to dispatch to UI thread if performing UI operations
+                Console.WriteLine("URL: " + args["url"]);
+                System.Diagnostics.Process.Start(args["url"]);
+            };
         }
 
         private void Form1_Load(object sender, EventArgs e)
