@@ -270,15 +270,34 @@ namespace GDriveNotifier
                     string lastEditBy = updateFileState(file);
                     if (file.ModifiedTime > datLast && !excludedFiles.ContainsKey(file.Id) && Properties.Settings.Default.MyName != lastEditBy)
                     {
-                        lstToasts.Add(new ToastContentBuilder()
+                        ToastContentBuilder tst = new ToastContentBuilder()
                             .AddArgument("action", "viewFile")
                             .AddArgument("fileId", file.Id)
-                            .AddArgument("url",file.WebViewLink)
-                            .AddText("File: " + file.Name)
-                            .AddText("Changed by: " + lastEditBy)
-                            .AddText("At: " + file.ModifiedTime)
-                            .SetToastDuration(ToastDuration.Long)
-                        );
+                            .AddArgument("url", file.WebViewLink)
+                            //.AddHeader(file.Id, file.Name, "action=viewFile&id=" + file.Id + "&url=" + file.WebViewLink)
+                            //                            .AddText("File: " + file.Name)
+                            .AddText(file.Name)
+                            //.AddAppLogoOverride(new Uri("https://www.seekpng.com/png/full/104-1044954_magnifying-glass-with-eye-vector-magnifying-glass-and.png"),ToastGenericAppLogoCrop.Circle)
+                            .SetToastDuration(ToastDuration.Long);
+                        try
+                        {
+                            tst = tst.AddCustomTimeStamp((DateTime)file.ModifiedTime);
+                            if (file.ModifiedTime.Value.Date == DateTime.Now.Date)
+                            {
+                                tst = tst.AddAttributionText(lastEditBy + " @ " + string.Format("{0:HH:mm}",file.ModifiedTime.Value));
+                            } else
+                            {
+                                tst = tst.AddAttributionText(lastEditBy + " @ " + string.Format("{0:HH:mm dd/MM/yyyy}", file.ModifiedTime.Value));
+                            }
+
+                        }
+                        catch (Exception exToast)
+                        {
+                            tst = tst.AddAttributionText(lastEditBy);
+                            // No need to do anything
+                        }
+
+                        lstToasts.Add(tst);
 
                         strDocChangeKey += file.Name + "|" + lastEditBy + "|";
                         if (file.Name.Length > 35)
