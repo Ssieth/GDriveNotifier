@@ -276,9 +276,17 @@ namespace GDriveNotifier
                             .AddArgument("url", file.WebViewLink)
                             //.AddHeader(file.Id, file.Name, "action=viewFile&id=" + file.Id + "&url=" + file.WebViewLink)
                             //                            .AddText("File: " + file.Name)
-                            .AddText(file.Name)
+                            .AddText(file.Name);
                             //.AddAppLogoOverride(new Uri("https://www.seekpng.com/png/full/104-1044954_magnifying-glass-with-eye-vector-magnifying-glass-and.png"),ToastGenericAppLogoCrop.Circle)
-                            .SetToastDuration(ToastDuration.Long);
+
+                        if (Properties.Settings.Default.LongNotification)
+                        {
+                            tst = tst.SetToastDuration(ToastDuration.Long);
+                        } else
+                        {
+                            tst = tst.SetToastDuration(ToastDuration.Short);
+                        }
+
                         try
                         {
                             tst = tst.AddCustomTimeStamp((DateTime)file.ModifiedTime);

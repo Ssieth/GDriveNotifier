@@ -73,7 +73,7 @@ namespace GDriveNotifier.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.14.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.15.0")]
         public string AppVer {
             get {
                 return ((string)(this["AppVer"]));
@@ -134,6 +134,18 @@ namespace GDriveNotifier.Properties {
             }
             set {
                 this["AddFilesToTaskbar"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool LongNotification {
+            get {
+                return ((bool)(this["LongNotification"]));
+            }
+            set {
+                this["LongNotification"] = value;
             }
         }
     }
