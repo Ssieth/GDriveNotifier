@@ -157,7 +157,7 @@ namespace GDriveNotifier
             if (itemNo == 0)
             {
                 // Need to clear down old items
-                int menuCount = 2;
+                //int menuCount = 2;
                 while (mnuTaskBar.Items[2].Text != "")
                 {
                     mnuTaskBar.Items.RemoveAt(2);
@@ -260,52 +260,76 @@ namespace GDriveNotifier
             IList<Google.Apis.Drive.v3.Data.File> files = response.Files;
             Console.WriteLine("Files:");
 
-            List<ToastContentBuilder> lstToasts = new List<ToastContentBuilder>();
+            //List<ToastContentBuilder> lstToasts = new List<ToastContentBuilder>();
             string strDocChangeKey = "";
 
             if (files != null && files.Count > 0)
             {
                 foreach (var file in files)
                 {
-                    string lastEditBy = updateFileState(file);
+                    FileState fileState = null;
+                    if (driveState.FileStates.ContainsKey(file.Id))
+                    {
+                        fileState = driveState.FileStates[file.Id];
+                    }
+
+                    // Determine if we know who last edited the file
+                    string lastEditBy = "Unknown";
+                    if (file.LastModifyingUser != null && file.LastModifyingUser.DisplayName != null)
+                    {
+                        lastEditBy = file.LastModifyingUser.DisplayName;
+                    }
+
+                    bool blnShowToast = (fileState == null || file.ModifiedTime > fileState.lastEditWhen.AddSeconds(Properties.Settings.Default.CheckSeconds * 5) || fileState.lastEditBy != lastEditBy);
+                    updateFileState(file);
+
                     if (file.ModifiedTime > datLast && !excludedFiles.ContainsKey(file.Id) && Properties.Settings.Default.MyName != lastEditBy)
                     {
-                        ToastContentBuilder tst = new ToastContentBuilder()
-                            .AddArgument("action", "viewFile")
-                            .AddArgument("fileId", file.Id)
-                            .AddArgument("url", file.WebViewLink)
-                            //.AddHeader(file.Id, file.Name, "action=viewFile&id=" + file.Id + "&url=" + file.WebViewLink)
-                            //                            .AddText("File: " + file.Name)
-                            .AddText(file.Name);
-                            //.AddAppLogoOverride(new Uri("https://www.seekpng.com/png/full/104-1044954_magnifying-glass-with-eye-vector-magnifying-glass-and.png"),ToastGenericAppLogoCrop.Circle)
+                        // If this is a new file or the file hasn't been edited in a while or the file has been edited by someone new then notify
 
-                        if (Properties.Settings.Default.LongNotification)
+                        if (blnShowToast)
                         {
-                            tst = tst.SetToastDuration(ToastDuration.Long);
-                        } else
-                        {
-                            tst = tst.SetToastDuration(ToastDuration.Short);
-                        }
+                            // Build the basic toast config
+                            ToastContentBuilder tst = new ToastContentBuilder()
+                                .AddArgument("action", "viewFile")
+                                .AddArgument("fileId", file.Id)
+                                .AddArgument("url", file.WebViewLink)
+                                .AddText(file.Name);
 
-                        try
-                        {
-                            tst = tst.AddCustomTimeStamp((DateTime)file.ModifiedTime);
-                            if (file.ModifiedTime.Value.Date == DateTime.Now.Date)
+                            // Set the toast duration based on settings.
+                            if (Properties.Settings.Default.LongNotification)
                             {
-                                tst = tst.AddAttributionText(lastEditBy + " @ " + string.Format("{0:HH:mm}",file.ModifiedTime.Value));
-                            } else
+                                tst = tst.SetToastDuration(ToastDuration.Long);
+                            }
+                            else
                             {
-                                tst = tst.AddAttributionText(lastEditBy + " @ " + string.Format("{0:HH:mm dd/MM/yyyy}", file.ModifiedTime.Value));
+                                tst = tst.SetToastDuration(ToastDuration.Short);
                             }
 
-                        }
-                        catch (Exception exToast)
-                        {
-                            tst = tst.AddAttributionText(lastEditBy);
-                            // No need to do anything
-                        }
+                            // Try and set the EditBy and modified time.
+                            try
+                            {
+                                tst = tst.AddCustomTimeStamp((DateTime)file.ModifiedTime);
+                                if (file.ModifiedTime.Value.Date == DateTime.Now.Date)
+                                {
+                                    tst = tst.AddAttributionText(lastEditBy + " @ " + string.Format("{0:HH:mm}", file.ModifiedTime.Value));
+                                }
+                                else
+                                {
+                                    tst = tst.AddAttributionText(lastEditBy + " @ " + string.Format("{0:HH:mm dd/MM/yyyy}", file.ModifiedTime.Value));
+                                }
 
-                        lstToasts.Add(tst);
+                            }
+                            catch (Exception)
+                            {
+                                // We failed so just set the EditBy
+                                tst = tst.AddAttributionText(lastEditBy);
+                            }
+
+                            // Display the toast
+                            tst.Show();
+                        }
+                        //lstToasts.Add(tst);
 
                         strDocChangeKey += file.Name + "|" + lastEditBy + "|";
                         if (file.Name.Length > 35)
@@ -330,12 +354,19 @@ namespace GDriveNotifier
                 if (Properties.Settings.Default.WindowsNotifications && strDocChangeKey != strLastTip)
                 {
                     strLastTip = strDocChangeKey;
-                    foreach (ToastContentBuilder tst in lstToasts)
-                    {
-                        tst.Show();
-                    }
+                    //foreach (ToastContentBuilder tst in lstToasts)
+                    //{
+                    //    tst.Show();
+                    //}
                 }
-                nfyIcon.Text = strDocsChanged;
+                if (strDocsChanged.Length > 64)
+                {
+                    nfyIcon.Text = strDocsChanged.Substring(0,63);
+                }
+                else
+                {
+                    nfyIcon.Text = strDocsChanged;
+                }
             }
             else
             {
@@ -405,7 +436,7 @@ namespace GDriveNotifier
                     throw;
                 }
             }
-        }
+        } 
 
         private void tmrCheck_Tick(object sender, EventArgs e)
         {
@@ -514,7 +545,7 @@ namespace GDriveNotifier
                 saveExcludes();
                 doCheck();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 // Do nothing here - we'd just be adding a duplicate
             }

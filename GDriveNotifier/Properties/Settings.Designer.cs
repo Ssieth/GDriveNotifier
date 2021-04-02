@@ -73,7 +73,7 @@ namespace GDriveNotifier.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.15.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.16.0")]
         public string AppVer {
             get {
                 return ((string)(this["AppVer"]));
