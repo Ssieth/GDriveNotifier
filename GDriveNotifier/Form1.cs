@@ -158,14 +158,14 @@ namespace GDriveNotifier
             {
                 // Need to clear down old items
                 //int menuCount = 2;
-                while (mnuTaskBar.Items[2].Text != "")
+                while (mnuTaskBar.Items[3].Text != "")
                 {
-                    mnuTaskBar.Items.RemoveAt(2);
+                    mnuTaskBar.Items.RemoveAt(3);
                 }
             }
             ToolStripMenuItem mnu = new ToolStripMenuItem(fs.name, null, mnuFileOpen);
             mnu.Tag = fs;
-            mnuTaskBar.Items.Insert(2 + itemNo, mnu);
+            mnuTaskBar.Items.Insert(3 + itemNo, mnu);
         }
 
         public void showFiles()
@@ -237,6 +237,7 @@ namespace GDriveNotifier
 
         public void checkChanges()
         {
+            bool blPaused = NotificationsPaused();
             string strDocsChanged = "";
             tmrCheck.Stop();
             log("Checking changes", 5);
@@ -286,8 +287,7 @@ namespace GDriveNotifier
                     if (file.ModifiedTime > datLast && !excludedFiles.ContainsKey(file.Id) && Properties.Settings.Default.MyName != lastEditBy)
                     {
                         // If this is a new file or the file hasn't been edited in a while or the file has been edited by someone new then notify
-
-                        if (blnShowToast)
+                        if (blnShowToast && !blPaused)
                         {
                             // Build the basic toast config
                             ToastContentBuilder tst = new ToastContentBuilder()
@@ -379,9 +379,30 @@ namespace GDriveNotifier
             tmrCheck.Start();
         }
 
+        /// <summary>
+        /// Check if notifications are paused and tidy up after a pause has expired as well as setting unpause menu item visibility.
+        /// </summary>
+        /// <returns>True if pause, False otherwise</returns>
+        private bool NotificationsPaused()
+        {
+            DateTime datPaused = Properties.Settings.Default.PauseNotificationsUntil;
+            bool blPaused = datPaused > DateTime.Now;
+            unpauseToolStripMenuItem.Visible = blPaused;
+            if (!blPaused)
+            {
+                if (Properties.Settings.Default.PauseNotificationsUntil != DateTime.MinValue)
+                {
+                    Properties.Settings.Default.PauseNotificationsUntil = DateTime.MinValue;
+                    Properties.Settings.Default.Save();
+                }
+            }
+            return blPaused;
+        }
+
         public Form1()
         {
             InitializeComponent();
+
             // Listen to notification activation
             ToastNotificationManagerCompat.OnActivated += toastArgs =>
             {
@@ -408,6 +429,9 @@ namespace GDriveNotifier
                 pageToken = "start";
             }
             tmrCheck.Start();
+
+            // Set up the pauseUntil date if it's in the past and set visibility of 'unpause' menu option
+            NotificationsPaused();
         }
 
         private void doCheck()
@@ -597,6 +621,82 @@ namespace GDriveNotifier
         private void settingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             showSettings();
+        }
+
+        private void pauseNotifications(int TimeSpanAmount, string Interval)
+        {
+            DateTime datPauseUntil = DateTime.MinValue;
+            switch (Interval.ToLower().Trim())
+            {
+                case "m":
+                    // Minutes
+                    datPauseUntil = DateTime.Now.AddMinutes(TimeSpanAmount);
+                    break;
+                case "h":
+                    // House
+                    datPauseUntil = DateTime.Now.AddHours(TimeSpanAmount);
+                    break;
+                case "i":
+                    // Indefinitely
+                    datPauseUntil = DateTime.MaxValue;
+                    break;
+                case "u":
+                    // Unpause
+                    datPauseUntil = DateTime.MinValue;
+                    break;
+                default:
+                    // Who knows?
+                    MessageBox.Show("Oops, I don't know how to pause " + TimeSpanAmount + " " + Interval, "Error",MessageBoxButtons.OK,MessageBoxIcon.Error);
+                    return; 
+            }
+            Properties.Settings.Default.PauseNotificationsUntil = datPauseUntil;
+            NotificationsPaused();
+        }
+
+
+        private void minutesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(5, "m");
+        }
+
+        private void minutesToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(10, "m");
+        }
+
+        private void minutesToolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(15, "m");
+        }
+
+        private void minutesToolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(30, "m");
+        }
+
+        private void hourToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(1, "h");
+        }
+
+        private void hoursToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(12, "h");
+        }
+
+        private void hoursToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(24, "h");
+        }
+
+        private void indefinitelyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(0, "i");
+        }
+
+        private void unpauseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            pauseNotifications(0, "u");
         }
     }
 }

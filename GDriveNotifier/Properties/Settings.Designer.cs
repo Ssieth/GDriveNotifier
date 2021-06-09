@@ -73,7 +73,7 @@ namespace GDriveNotifier.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1.16.0")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1.17.0")]
         public string AppVer {
             get {
                 return ((string)(this["AppVer"]));
@@ -146,6 +146,18 @@ namespace GDriveNotifier.Properties {
             }
             set {
                 this["LongNotification"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("2020-01-01")]
+        public global::System.DateTime PauseNotificationsUntil {
+            get {
+                return ((global::System.DateTime)(this["PauseNotificationsUntil"]));
+            }
+            set {
+                this["PauseNotificationsUntil"] = value;
             }
         }
     }
