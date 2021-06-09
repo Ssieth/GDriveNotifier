@@ -44,7 +44,11 @@ namespace GDriveNotifier
             Console.WriteLine(strLog);
             if (Properties.Settings.Default.LogToFile && Properties.Settings.Default.LogLevel >= logLevel)
             {
-                StreamWriter sw = new StreamWriter(string.Format("log-{0:yyyy-MM-dd}.txt", DateTime.Now), true);
+                if (!Directory.Exists("logs"))
+                {
+                    Directory.CreateDirectory("logs");
+                }
+                StreamWriter sw = new StreamWriter(string.Format("logs\\log-{0:yyyy-MM-dd}.txt", DateTime.Now), true);
                 sw.WriteLine(strLog);
                 sw.Flush();
                 sw.Close();
